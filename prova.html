@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz de Química - ENEM & Vestibulares</title>
+    <link rel="stylesheet" href="prova.css">
+</head>
+<body>
+
+    <header>
+        <h1>Quiz Interativo de Química</h1>
+        <p>Pratica com questões reais extraídas fielmente dos exames do ENEM e Vestibulares.</p>
+    </header>
+
+    <div class="quiz-container" id="quiz-box"></div>
+
+    <div class="quiz-container">
+        <button class="action-btn" id="submit-all-btn" onclick="finishQuiz()">Finalizar Quiz e Ver Resultado</button>
+        
+        <div id="result-card">
+            <h2>Resultados do Quiz</h2>
+            <div class="score-text" id="score-display">Acertaste 0 de 0 questões!</div>
+            <p id="performance-feedback"></p>
+            <button class="action-btn" style="background-color: #27ae60;" onclick="window.location.reload()">Refazer Quiz</button>
+        </div>
+    </div>
+
+    <script src="prova.js"></script>
+</body>
+</html>
