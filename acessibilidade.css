@@ -1,0 +1,86 @@
+#accessibility-tools {
+    --accessibility-bg: #ffffff;
+    --accessibility-text: #0f172a;
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 1000;
+    color: var(--accessibility-text);
+}
+
+#accessibility-tools button {
+    font: inherit;
+}
+
+#accessibility-toggle {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 3rem;
+    padding: .75rem 1rem;
+    border: 2px solid #064e3b;
+    border-radius: .75rem;
+    background: #059669;
+    color: #fff;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+}
+
+#accessibility-toggle:focus-visible,
+#accessibility-tools button:focus-visible,
+#accessibility-tools [role="dialog"]:focus-visible {
+    outline: 4px solid #f59e0b;
+    outline-offset: 3px;
+}
+
+#accessibility-panel {
+    display: none;
+    width: min(22rem, calc(100vw - 2rem));
+    max-height: min(70vh, 36rem);
+    overflow-y: auto;
+    margin-bottom: .75rem;
+    padding: 1rem;
+    border: 2px solid #064e3b;
+    border-radius: .75rem;
+    background: var(--accessibility-bg);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 25%);
+}
+
+#accessibility-panel.is-open { display: block; }
+#accessibility-panel h2 { margin: 0 0 .35rem; font-size: 1.1rem; }
+#accessibility-panel p { margin: 0 0 .85rem; font-size: .85rem; }
+.accessibility-grid { display: grid; gap: .5rem; }
+.accessibility-grid button {
+    width: 100%;
+    padding: .65rem .75rem;
+    border: 1px solid #64748b;
+    border-radius: .5rem;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.accessibility-grid button:hover { background: #d1fae5; }
+.accessibility-status { margin-top: .75rem; font-size: .8rem; font-weight: 700; }
+
+html.accessibility-high-contrast body { background: #000 !important; color: #fff !important; }
+html.accessibility-high-contrast a,
+html.accessibility-high-contrast button { outline-color: #ffff00; }
+html.accessibility-grayscale { filter: grayscale(1); }
+html.accessibility-readable-font body,
+html.accessibility-readable-font button,
+html.accessibility-readable-font input,
+html.accessibility-readable-font textarea { font-family: Verdana, sans-serif !important; }
+html.accessibility-underline a { text-decoration: underline !important; }
+html.accessibility-focus *:focus { outline: 4px solid #f59e0b !important; outline-offset: 3px !important; }
+html.accessibility-large-text { font-size: 118%; }
+html.accessibility-extra-spacing body { line-height: 1.8 !important; letter-spacing: .04em; word-spacing: .12em; }
+html.accessibility-reduced-motion *,
+html.accessibility-reduced-motion *::before,
+html.accessibility-reduced-motion *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+
+@media (max-width: 640px) {
+    #accessibility-tools { right: .5rem; bottom: .5rem; }
+    #accessibility-toggle { min-height: 2.75rem; padding: .65rem .8rem; }
+}

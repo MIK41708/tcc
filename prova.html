@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz de Química - ENEM & Vestibulares</title>
+    <link rel="stylesheet" href="acessibilidade.css">
     <style>
         :root {
             --bg-color: #f4f7f6;
@@ -644,5 +645,17 @@
 
         window.onload = loadQuiz;
     </script>
+    <div vw class="enabled">
+        <div vw-access-button class="active"></div>
+        <div vw-plugin-wrapper>
+            <div class="vw-plugin-top-wrapper"></div>
+        </div>
+    </div>
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <script>
+        new window.VLibras.Widget('https://vlibras.gov.br/app');
+    </script>
+    <script src="https://cdn.userway.org/widget.js" data-account="SEU_ID_AQUI"></script>
+    <script src="acessibilidade.js"></script>
 </body>
 </html>
