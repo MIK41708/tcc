@@ -1068,8 +1068,6 @@
       const currentIndex = colorModes.findIndex((mode) => mode.id === currentColorMode);
       applyColorMode(colorModes[(currentIndex + 1) % colorModes.length].id);
     });
-    applyColorMode(currentColorMode);
-
     const languageData = {
       PT: { html: 'pt-BR', theme: ['Modo claro', 'Modo escuro'], enter: 'Entrar', scroll: 'ROLE PARA EXPLORAR', tags: ['Estrutura Atômica', 'Fase 01 — Escala Quântica', 'Fase 02 — Visão Explodida', 'Fase 03 — Análise 360°', 'Conteúdo', 'Aulas', 'Prática', 'Experimentos', 'Eletroquímica', 'Desafio final'], titles: ['ÁTOMO DE BORO', 'Camadas Eletrônicas', 'Desconstrução de Núcleos', 'Geometria das Partículas'], atom: ['Explore a matéria no seu nível mais fundamental. Role a página para iniciar o zoom e desacoplar o modelo atômico em visão explodida.', 'Os elétrons orbitam em torno do núcleo denso em níveis discretos de energia. Afastando a câmera, revelamos o sistema orbital completo do elemento.', 'A força nuclear forte é superada na simulação visual, revelando a composição individual do núcleo: 5 Prótons e 6 Nêutrons.', 'Análise tridimensional e espacial das forças quânticas subatômicas em rotação contínua de 360 graus.'], content: ['Aprenda química do seu jeito', 'Escolha uma atividade para continuar seus estudos, revisar os assuntos e praticar o que aprendeu.'], nav: ['Vídeos', 'Jogo educacional', 'PhET', 'Bond Breaker', 'Provão'], cards: ['Vídeos', 'Jogo educacional', 'PhET', 'Bond Breaker 2.0', 'Provão'], cardTags: ['Aulas', 'Prática', 'Experimentos', 'Eletroquímica', 'Desafio final'], cardText: ['Assista às resoluções do Enem e acompanhe o raciocínio passo a passo.', 'Aprenda se divertindo com desafios de química.', 'Teste experimentos práticos e observe os conceitos em ação.', 'Explore ligações químicas em uma experiência interativa.', 'Teste seus conhecimentos e veja o quanto você evoluiu.'], links: ['Resolução 2023', 'Resolução 2024', 'Resolução 2025', 'Começar jogo', 'Entrar no PhET', 'Entrar', 'Começar provão'] },
       EN: { html: 'en', theme: ['Light mode', 'Dark mode'], enter: 'Sign in', scroll: 'SCROLL TO EXPLORE', tags: ['Atomic Structure', 'Phase 01 — Quantum Scale', 'Phase 02 — Exploded View', 'Phase 03 — 360° Analysis', 'Content', 'Lessons', 'Practice', 'Experiments', 'Electrochemistry', 'Final challenge'], titles: ['BORON ATOM', 'Electron Shells', 'Nucleus Breakdown', 'Particle Geometry'], atom: ['Explore matter at its most fundamental level. Scroll to zoom in and separate the atomic model into an exploded view.', 'Electrons orbit the dense nucleus at discrete energy levels. Pulling the camera back reveals the complete orbital system.', 'The simulation reveals the nucleus composition: 5 protons and 6 neutrons.', 'A three-dimensional analysis of subatomic particles in continuous 360-degree rotation.'], content: ['Learn chemistry your way', 'Choose an activity to continue studying, review concepts and practice what you learned.'], nav: ['Videos', 'Educational game', 'PhET', 'Bond Breaker', 'Final exam'], cards: ['Videos', 'Educational game', 'PhET', 'Bond Breaker 2.0', 'Final exam'], cardTags: ['Lessons', 'Practice', 'Experiments', 'Electrochemistry', 'Final challenge'], cardText: ['Watch exam solutions and follow the reasoning step by step.', 'Learn through fun chemistry challenges.', 'Test practical experiments and see concepts in action.', 'Explore chemical bonds in an interactive experience.', 'Test your knowledge and see your progress.'], links: ['2023 solution', '2024 solution', '2025 solution', 'Start game', 'Open PhET', 'Open', 'Start final exam'] },
@@ -1077,7 +1075,7 @@
       ES: { html: 'es', theme: ['Modo claro', 'Modo oscuro'], enter: 'Entrar', scroll: 'DESLIZA PARA EXPLORAR', tags: ['Estructura atómica', 'Fase 01 — Escala cuántica', 'Fase 02 — Vista ampliada', 'Fase 03 — Análisis 360°', 'Contenido', 'Clases', 'Práctica', 'Experimentos', 'Electroquímica', 'Desafío final'], titles: ['ÁTOMO DE BORO', 'Capas electrónicas', 'Descomposición del núcleo', 'Geometría de partículas'], atom: ['Explora la materia en su nivel más fundamental. Desliza para ampliar y separar el modelo atómico.', 'Los electrones orbitan el núcleo denso en niveles discretos de energía. Al alejar la cámara vemos el sistema orbital completo.', 'La simulación revela la composición del núcleo: 5 protones y 6 neutrones.', 'Análisis tridimensional de partículas subatómicas en rotación continua de 360 grados.'], content: ['Aprende química a tu manera', 'Elige una actividad para continuar tus estudios, repasar conceptos y practicar lo aprendido.'], nav: ['Videos', 'Juego educativo', 'PhET', 'Bond Breaker', 'Examen final'], cards: ['Videos', 'Juego educativo', 'PhET', 'Bond Breaker 2.0', 'Examen final'], cardTags: ['Clases', 'Práctica', 'Experimentos', 'Electroquímica', 'Desafío final'], cardText: ['Mira resoluciones del examen y sigue el razonamiento paso a paso.', 'Aprende jugando con desafíos de química.', 'Prueba experimentos prácticos y observa los conceptos.', 'Explora los enlaces químicos en una experiencia interactiva.', 'Pon a prueba tus conocimientos y observa tu progreso.'], links: ['Resolución 2023', 'Resolución 2024', 'Resolución 2025', 'Comenzar juego', 'Entrar en PhET', 'Entrar', 'Comenzar examen'] }
     };
     const accountTranslations = {
-      PT: ['Entrar', 'Nome', 'E-mail', 'Senha', 'Ainda não tem cadastro?', 'Criar cadastro', 'Perfil', 'Baixar imagem do computador', 'Sair da conta'],
+      PT: ['Entrar', 'Nome', 'E-mail', 'Senha', 'Ainda não tem cadastro?', 'Criar cadastro', 'Perfil', 'Enviar imagem do computador', 'Sair da conta'],
       EN: ['Sign in', 'Name', 'Email', 'Password', "Don't have an account?", 'Create account', 'Profile', 'Upload image from computer', 'Sign out'],
       '中文': ['登录', '姓名', '电子邮箱', '密码', '还没有账户？', '创建账户', '个人资料', '从电脑上传图片', '退出账户'],
       ES: ['Entrar', 'Nombre', 'Correo', 'Contraseña', '¿Aún no tienes cuenta?', 'Crear cuenta', 'Perfil', 'Subir imagen desde el ordenador', 'Salir de la cuenta']
@@ -1111,6 +1109,7 @@
     window.siteT = function(key) { const data = uiTranslations[currentLanguage] || uiTranslations.PT; return data[key] || uiTranslations.PT[key] || key; };
 
     let currentLanguage = localStorage.getItem('quimica-language') || 'PT';
+    window.quimicaSignUpMode = false;
     const setText = (selector, value) => { const element = document.querySelector(selector); if (element) element.textContent = value; };
     function applyLanguage(language) {
       const data = languageData[language] || languageData.PT;
@@ -1153,18 +1152,18 @@
 
       document.getElementById('accountLabel').textContent = ui.accountButton;
       const accountText = accountTranslations[language] || accountTranslations.PT;
-      document.getElementById('accountTitle').textContent = signUpMode ? ui.signup : ui.login;
-      document.getElementById('accountSubtitle').textContent = signUpMode ? ui.signupSubtitle : ui.loginSubtitle;
+      document.getElementById('accountTitle').textContent = window.quimicaSignUpMode === true ? ui.signup : ui.login;
+      document.getElementById('accountSubtitle').textContent = window.quimicaSignUpMode === true ? ui.signupSubtitle : ui.loginSubtitle;
       document.querySelector('#nameField').childNodes[0].textContent = ui.name;
       document.querySelector('#nameField input').placeholder = ui.name;
       document.querySelector('.account-form label:nth-of-type(2)').childNodes[0].textContent = ui.email;
       document.querySelector('.account-form label:nth-of-type(2) input').placeholder = ui.emailPlaceholder;
       document.querySelector('.account-form label:nth-of-type(3)').childNodes[0].textContent = ui.password;
       document.querySelector('.account-form label:nth-of-type(3) input').placeholder = ui.passwordPlaceholder;
-      document.getElementById('accountSubmit').textContent = signUpMode ? ui.signup : ui.login;
-      document.getElementById('googleButtonText').textContent = signUpMode ? ui.googleSignup : ui.googleLogin;
+      document.getElementById('accountSubmit').textContent = window.quimicaSignUpMode === true ? ui.signup : ui.login;
+      document.getElementById('googleButtonText').textContent = window.quimicaSignUpMode === true ? ui.googleSignup : ui.googleLogin;
       document.querySelector('.account-form p').childNodes[0].textContent = ui.noAccount + ' ';
-      document.getElementById('switchAccount').textContent = signUpMode ? ui.login : ui.createAccount;
+      document.getElementById('switchAccount').textContent = window.quimicaSignUpMode === true ? ui.login : ui.createAccount;
       document.querySelector('#profileModal h2').textContent = ui.profile;
       document.getElementById('profileName').textContent = document.getElementById('profileName').textContent === 'Visitante' || document.getElementById('profileName').textContent === 'Visitor' || document.getElementById('profileName').textContent === '访客' || document.getElementById('profileName').textContent === 'Visitante' ? ui.visitor : document.getElementById('profileName').textContent;
       document.getElementById('profileNameInput').placeholder = ui.newName;
@@ -1193,6 +1192,7 @@
     }
     document.getElementById('languageButton').addEventListener('click', () => applyLanguage(languages[(languages.indexOf(currentLanguage) + 1) % languages.length]));
     applyLanguage(currentLanguage);
+    applyColorMode(currentColorMode);
 
     // --- LEITOR DE VOZ NATIVO (Web Speech API) ---
     // Leitor robusto: velocidade/voz aplicadas imediatamente, pausa/continuação
@@ -1590,6 +1590,42 @@
     // Compatibilidade com o botão antigo.
     window.toggleReaderPanel = window.quimicaReaderToggle;
 
+    // --- BOTÕES DE PERFIL, FECHAR MODAIS E WHATSAPP ---
+    const profileButton = document.getElementById('profileButton');
+    const profileModalElement = document.getElementById('profileModal');
+    const accountModalElement = document.getElementById('accountModal');
+    const whatsappButton = document.getElementById('whatsappButton');
+    const whatsappModal = document.getElementById('whatsappModal');
+
+    if (profileButton) {
+      profileButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (profileModalElement) profileModalElement.classList.add('open');
+      });
+    }
+
+    document.querySelectorAll('[data-close]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const targetId = button.getAttribute('data-close');
+        const target = document.getElementById(targetId);
+        if (target) target.classList.remove('open');
+      });
+    });
+
+    [accountModalElement, profileModalElement, whatsappModal].forEach((modal) => {
+      if (!modal) return;
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) modal.classList.remove('open');
+      });
+    });
+
+    if (whatsappButton && whatsappModal) {
+      whatsappButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        whatsappModal.classList.add('open');
+      });
+    }
+
     if (window.VLibras) new window.VLibras.Widget('https://vlibras.gov.br/app');
 
 </script>
@@ -1795,6 +1831,7 @@ const firebaseConfig = {
   function configurarLogin() {
 
     signUpMode = false;
+    window.quimicaSignUpMode = false;
 
     nameField.hidden = true;
 
@@ -1816,6 +1853,7 @@ const firebaseConfig = {
   function configurarCadastro() {
 
     signUpMode = true;
+    window.quimicaSignUpMode = true;
 
     nameField.hidden = false;
 
