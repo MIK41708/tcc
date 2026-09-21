@@ -1195,8 +1195,9 @@
     applyColorMode(currentColorMode);
 
     // --- LEITOR DE VOZ NATIVO (Web Speech API) ---
-    // Leitor robusto: velocidade/voz aplicadas imediatamente, pausa/continuação
-    // preservadas e idioma sempre sincronizado com o idioma do site.
+    // Controle robusto de leitura: iniciar, pausar, continuar e parar.
+    // A posição atual é preservada e a voz/velocidade podem ser alteradas
+    // sem perder o trecho que está sendo lido.
     const readerPanel = document.getElementById('readerPanel');
     const readerButton = document.getElementById('readerButton');
     const readerStatus = document.getElementById('readerLanguage');
@@ -1215,10 +1216,11 @@
     let chunks = [];
     let chunkIndex = 0;
     let reading = false;
+    let readerPaused = false;
     let restarting = false;
     let languageChanging = false;
     let currentUtterance = null;
-    let savedPaused = false;
+    let speakTimer = null;
 
     function readerLang() {
       const lang = (document.documentElement.lang || 'pt-BR').toLowerCase();
@@ -1244,6 +1246,7 @@
         '.resource-card h3', '.resource-card p',
         '.site-footer .footer-title', '.site-footer .footer-help'
       ];
+
       return [...document.querySelectorAll(selectors.join(','))]
         .map(el => (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim())
         .filter(Boolean);
@@ -1254,20 +1257,25 @@
       const result = [];
       const parts = text.match(/[^.!?。！？；：]+[.!?。！？；：]+|[^.!?。！？；：]+$/g) || [text];
       let buffer = '';
+
       for (const raw of parts) {
         let part = raw.trim();
         if (!part) continue;
+
         if ((buffer + ' ' + part).trim().length <= max) {
           buffer = (buffer + ' ' + part).trim();
         } else {
           if (buffer) result.push(buffer);
+
           while (part.length > max) {
             result.push(part.slice(0, max));
             part = part.slice(max);
           }
+
           buffer = part;
         }
       }
+
       if (buffer) result.push(buffer);
       return result;
     }
@@ -1275,200 +1283,372 @@
     function getLanguageVoices() {
       const wanted = readerLang().toLowerCase();
       const base = languageBase();
-      const exact = voices.filter(v => v.lang && v.lang.toLowerCase() === wanted);
-      const regional = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(base + '-'));
+
+      const exact = voices.filter(v =>
+        v.lang && v.lang.toLowerCase() === wanted
+      );
+
+      const regional = voices.filter(v =>
+        v.lang && v.lang.toLowerCase().startsWith(base + '-')
+      );
+
       return exact.length ? exact : regional;
     }
 
     function loadReaderVoices(preferredName = null) {
       if (!synth || !readerVoice) return;
+
       voices = synth.getVoices() || [];
-      const matches = getLanguageVoices();
-      availableVoices = matches.length ? matches : [];
-      const previous = preferredName || localStorage.getItem('quimica-reader-voice-' + languageBase());
+      availableVoices = getLanguageVoices();
+
+      const previous =
+        preferredName ||
+        localStorage.getItem('quimica-reader-voice-' + languageBase());
+
       readerVoice.innerHTML = '';
 
       if (!availableVoices.length) {
         const opt = document.createElement('option');
         opt.value = '';
-        opt.textContent = readerMessage('readerDefaultVoice', 'Voz padrão do navegador');
+        opt.textContent = readerMessage(
+          'readerDefaultVoice',
+          'Voz padrão do navegador'
+        );
         opt.dataset.name = '';
         opt.dataset.lang = readerLang();
         readerVoice.appendChild(opt);
         return;
       }
 
-      availableVoices.forEach((v, index) => {
+      availableVoices.forEach((voice, index) => {
         const opt = document.createElement('option');
         opt.value = String(index);
-        opt.textContent = `${v.name} (${v.lang})`;
-        opt.dataset.name = v.name;
-        opt.dataset.lang = v.lang;
+        opt.textContent = `${voice.name} (${voice.lang})`;
+        opt.dataset.name = voice.name;
+        opt.dataset.lang = voice.lang;
         readerVoice.appendChild(opt);
       });
 
-      let selected = availableVoices.findIndex(v => v.name === previous);
+      let selected = availableVoices.findIndex(
+        voice => voice.name === previous
+      );
+
       if (selected < 0) selected = 0;
       readerVoice.selectedIndex = selected;
     }
 
     function getSelectedVoice() {
-      const opt = readerVoice && readerVoice.options[readerVoice.selectedIndex];
+      const opt = readerVoice &&
+        readerVoice.options[readerVoice.selectedIndex];
+
       if (!opt || !opt.dataset.name) return null;
-      return availableVoices.find(v => v.name === opt.dataset.name && v.lang === opt.dataset.lang) || null;
+
+      return availableVoices.find(
+        voice =>
+          voice.name === opt.dataset.name &&
+          voice.lang === opt.dataset.lang
+      ) || null;
     }
 
     function updateReaderUI() {
+      if (!readStart || !readPause || !readResume || !readStop) return;
+
       const speaking = !!(synth && synth.speaking);
       const browserPaused = !!(synth && synth.paused);
-      if (readStart) readStart.disabled = reading && (speaking || browserPaused);
-      if (readPause) readPause.disabled = !speaking || browserPaused;
-      if (readResume) readResume.disabled = !(browserPaused || (!reading && chunks.length && chunkIndex < chunks.length));
-      if (readStop) readStop.disabled = !reading && !speaking && !browserPaused;
+
+      // "Continuar" fica disponível quando nossa aplicação sabe que
+      // a leitura está pausada, mesmo que o navegador ainda não tenha
+      // atualizado speechSynthesis.paused.
+      const paused = readerPaused || browserPaused;
+
+      readStart.disabled = reading && (speaking || paused);
+      readPause.disabled = !reading || !speaking || paused;
+      readResume.disabled =
+        !reading || !paused || !chunks.length || chunkIndex >= chunks.length;
+      readStop.disabled = !reading && !speaking && !paused;
     }
 
     function setProgress() {
       if (!readerProgressBar) return;
-      const value = chunks.length ? (chunkIndex / chunks.length) * 100 : 0;
-      readerProgressBar.style.width = `${Math.min(100, value)}%`;
+
+      const value = chunks.length
+        ? (chunkIndex / chunks.length) * 100
+        : 0;
+
+      readerProgressBar.style.width =
+        `${Math.min(100, Math.max(0, value))}%`;
     }
 
     function setRateLabel() {
       if (!readerRateValue || !readerRate) return;
-      readerRateValue.textContent = `${Number(readerRate.value).toFixed(1).replace('.', ',')}x`;
+
+      readerRateValue.textContent =
+        `${Number(readerRate.value).toFixed(1).replace('.', ',')}x`;
+    }
+
+    function clearSpeakTimer() {
+      if (speakTimer !== null) {
+        clearTimeout(speakTimer);
+        speakTimer = null;
+      }
     }
 
     function cancelSpeech() {
+      clearSpeakTimer();
+
       if (!synth) return;
-      try { synth.cancel(); } catch (_) {}
+
+      try {
+        synth.cancel();
+      } catch (_) {}
+
       currentUtterance = null;
     }
 
     function speakChunk() {
-      if (!synth || !reading || chunkIndex >= chunks.length) {
-        if (reading) {
-          reading = false;
-          currentUtterance = null;
-          if (readerProgressBar) readerProgressBar.style.width = '100%';
-          readerStatus.textContent = readerMessage('readerFinished', 'Leitura concluída.');
-          updateReaderUI();
+      if (!synth || !reading || readerPaused) return;
+
+      if (!chunks.length || chunkIndex >= chunks.length) {
+        reading = false;
+        readerPaused = false;
+        currentUtterance = null;
+
+        if (readerProgressBar) {
+          readerProgressBar.style.width = '100%';
         }
+
+        if (readerStatus) {
+          readerStatus.textContent =
+            readerMessage('readerFinished', 'Leitura concluída.');
+        }
+
+        updateReaderUI();
         return;
       }
 
+      clearSpeakTimer();
+
       const text = chunks[chunkIndex];
-      const u = new SpeechSynthesisUtterance(text);
-      currentUtterance = u;
-      u.rate = Math.max(0.6, Math.min(1.5, Number(readerRate && readerRate.value) || 1));
-      u.pitch = 1;
-      u.volume = 1;
+      const utterance = new SpeechSynthesisUtterance(text);
+      currentUtterance = utterance;
+
+      utterance.rate = Math.max(
+        0.6,
+        Math.min(1.5, Number(readerRate && readerRate.value) || 1)
+      );
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      utterance.lang = readerLang();
 
       const voice = getSelectedVoice();
-      // O idioma do site é sempre a prioridade. Se houver voz compatível,
-      // usamos exatamente essa voz; caso contrário, o navegador tenta usar
-      // a voz padrão para o lang definido.
-      u.lang = readerLang();
       if (voice) {
-        u.voice = voice;
-        u.lang = voice.lang;
+        utterance.voice = voice;
+        utterance.lang = voice.lang;
       }
 
-      u.onstart = () => {
-        if (currentUtterance !== u) return;
-        savedPaused = false;
-        if (readerStatus) readerStatus.textContent = `${readerMessage('reader', 'Leitura')} ${chunkIndex + 1} ${readerMessage('of', 'de')} ${chunks.length}...`;
+      utterance.onstart = () => {
+        if (currentUtterance !== utterance) return;
+
+        if (readerPaused || !reading) return;
+
+        if (readerStatus) {
+          readerStatus.textContent =
+            `${readerMessage('reader', 'Leitura')} ` +
+            `${chunkIndex + 1} ${readerMessage('of', 'de')} ` +
+            `${chunks.length}...`;
+        }
+
         setProgress();
         updateReaderUI();
       };
 
-      u.onend = () => {
-        if (currentUtterance !== u) return;
+      utterance.onend = () => {
+        if (currentUtterance !== utterance) return;
+
         currentUtterance = null;
+
         if (restarting || languageChanging) return;
-        if (!reading) return;
+        if (!reading || readerPaused) return;
+
         chunkIndex++;
         setProgress();
+
         if (chunkIndex >= chunks.length) {
           reading = false;
-          if (readerProgressBar) readerProgressBar.style.width = '100%';
-          if (readerStatus) readerStatus.textContent = readerMessage('readerFinished', 'Leitura concluída.');
+          readerPaused = false;
+
+          if (readerProgressBar) {
+            readerProgressBar.style.width = '100%';
+          }
+
+          if (readerStatus) {
+            readerStatus.textContent =
+              readerMessage('readerFinished', 'Leitura concluída.');
+          }
+
           updateReaderUI();
           return;
         }
-        // Pequeno intervalo evita falhas do SpeechSynthesis no Chrome/Edge.
-        setTimeout(() => { if (reading && !restarting && !languageChanging) speakChunk(); }, 90);
+
+        // Pequeno intervalo para evitar falhas do SpeechSynthesis
+        // no Chrome/Edge ao encadear vários trechos.
+        speakTimer = setTimeout(() => {
+          speakTimer = null;
+          if (reading && !readerPaused && !restarting && !languageChanging) {
+            speakChunk();
+          }
+        }, 100);
       };
 
-      u.onerror = (event) => {
-        if (currentUtterance !== u) return;
+      utterance.onerror = (event) => {
+        if (currentUtterance !== utterance) return;
+
         currentUtterance = null;
-        const error = event && event.error ? event.error : 'unknown';
-        if (restarting || languageChanging || error === 'canceled' || error === 'interrupted') return;
+
+        const error =
+          event && event.error ? event.error : 'unknown';
+
+        // cancel/interrupted são esperados quando o usuário pausa,
+        // para, troca a voz ou troca o idioma.
+        if (
+          restarting ||
+          languageChanging ||
+          error === 'canceled' ||
+          error === 'interrupted'
+        ) {
+          updateReaderUI();
+          return;
+        }
+
         reading = false;
-        if (readerStatus) readerStatus.textContent = `${readerMessage('reader', 'Leitura')}: ${error}.`;
+        readerPaused = false;
+
+        if (readerStatus) {
+          readerStatus.textContent =
+            `${readerMessage('reader', 'Leitura')}: ${error}.`;
+        }
+
         updateReaderUI();
       };
 
       try {
-        synth.resume();
-        synth.speak(u);
+        // Alguns navegadores deixam a síntese "travada" após uma pausa.
+        // resume() antes de speak() ajuda a liberar o mecanismo.
+        try { synth.resume(); } catch (_) {}
+
+        synth.speak(utterance);
       } catch (error) {
         currentUtterance = null;
         reading = false;
-        if (readerStatus) readerStatus.textContent = readerMessage('readerUnavailable', 'Não foi possível iniciar a leitura.');
+        readerPaused = false;
+
+        if (readerStatus) {
+          readerStatus.textContent =
+            readerMessage(
+              'readerUnavailable',
+              'Não foi possível iniciar a leitura.'
+            );
+        }
+
         updateReaderUI();
       }
     }
 
+    function scheduleSpeak(delay = 60) {
+      clearSpeakTimer();
+
+      speakTimer = setTimeout(() => {
+        speakTimer = null;
+
+        if (reading && !readerPaused && !languageChanging) {
+          speakChunk();
+        }
+      }, delay);
+    }
+
     function startReader(fromCurrent = false) {
       if (!synth || typeof SpeechSynthesisUtterance !== 'function') {
-        readerStatus.textContent = readerMessage('readerUnavailable', 'Seu navegador não disponibiliza leitura de voz.');
+        if (readerStatus) {
+          readerStatus.textContent =
+            readerMessage(
+              'readerUnavailable',
+              'Seu navegador não disponibiliza leitura de voz.'
+            );
+        }
         return;
       }
 
       if (!fromCurrent) {
         const text = readableContent().join('. ');
+
         if (!text.trim()) {
-          readerStatus.textContent = readerMessage('readerDescription', 'Não encontrei conteúdo para ler.');
+          if (readerStatus) {
+            readerStatus.textContent =
+              readerMessage(
+                'readerDescription',
+                'Não encontrei conteúdo para ler.'
+              );
+          }
           return;
         }
+
         chunks = splitText(text);
         chunkIndex = 0;
       } else if (!chunks.length || chunkIndex >= chunks.length) {
-        return startReader(false);
+        startReader(false);
+        return;
       }
 
       cancelSpeech();
+
       restarting = false;
       languageChanging = false;
       reading = true;
-      savedPaused = false;
+      readerPaused = false;
+
       if (!fromCurrent) setProgress();
-      readerStatus.textContent = `${readerMessage('reader', 'Leitura')}...`;
+
+      if (readerStatus) {
+        readerStatus.textContent =
+          `${readerMessage('reader', 'Leitura')}...`;
+      }
+
       updateReaderUI();
-      setTimeout(() => { if (reading) speakChunk(); }, 40);
+      scheduleSpeak(70);
     }
 
     function restartCurrentChunk() {
-      if (!reading || !chunks.length || chunkIndex >= chunks.length) return;
+      if (
+        !reading ||
+        readerPaused ||
+        !chunks.length ||
+        chunkIndex >= chunks.length
+      ) return;
+
       restarting = true;
       cancelSpeech();
+
+      scheduleSpeak(80);
+
       setTimeout(() => {
         restarting = false;
-        if (reading) speakChunk();
-      }, 60);
+
+        if (reading && !readerPaused) {
+          speakChunk();
+        }
+      }, 90);
     }
 
-    // Chamado pelo seletor de idioma do site. Se a leitura estava ativa,
-    // reinicia o trecho atual já com o idioma/voz novos.
+    // Chamado pelo seletor de idioma do site.
     window.quimicaReaderLanguageChanged = function () {
       if (!synth) return;
+
       const wasReading = reading;
+      const wasPaused = readerPaused || synth.paused;
+
       languageChanging = true;
       cancelSpeech();
 
-      // O conteúdo já foi traduzido por applyLanguage(). Recriamos a fila para
-      // impedir que o leitor continue usando frases do idioma anterior.
       if (wasReading) {
         const text = readableContent().join('. ');
         chunks = splitText(text);
@@ -1477,12 +1657,31 @@
       }
 
       loadReaderVoices();
+
       if (wasReading && chunks.length) {
         reading = true;
-        setTimeout(() => {
+        readerPaused = wasPaused;
+
+        if (readerPaused) {
           languageChanging = false;
-          if (reading) speakChunk();
-        }, 120);
+
+          if (readerStatus) {
+            readerStatus.textContent =
+              readerMessage('pause', 'Leitura pausada.') + '.';
+          }
+
+          updateReaderUI();
+        } else {
+          scheduleSpeak(120);
+
+          setTimeout(() => {
+            languageChanging = false;
+
+            if (reading && !readerPaused) {
+              speakChunk();
+            }
+          }, 130);
+        }
       } else {
         languageChanging = false;
         updateReaderUI();
@@ -1490,101 +1689,188 @@
     };
 
     window.quimicaReaderToggle = function (event) {
-      if (event) { event.preventDefault(); event.stopPropagation(); }
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
       if (!readerPanel || !readerButton) return false;
+
       const open = !readerPanel.classList.contains('open');
       readerPanel.classList.toggle('open', open);
       readerButton.setAttribute('aria-expanded', String(open));
+
       if (open) {
         loadReaderVoices();
-        readerStatus.textContent = synth
-          ? readerMessage('readerReady', 'Pronto. Clique em “Ler site”.')
-          : readerMessage('readerUnavailable', 'Seu navegador não oferece leitura de voz.');
+
+        if (readerStatus) {
+          readerStatus.textContent = synth
+            ? readerMessage(
+                'readerReady',
+                'Pronto. Clique em “Ler site”.'
+              )
+            : readerMessage(
+                'readerUnavailable',
+                'Seu navegador não oferece leitura de voz.'
+              );
+        }
+
         updateReaderUI();
       }
+
       return false;
     };
 
+    // INICIAR
     readStart.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
+
+      // Sempre começa uma leitura nova pelo primeiro trecho.
       startReader(false);
     });
 
-    readPause.addEventListener('click', () => {
-      if (synth && synth.speaking && !synth.paused) {
+    // PAUSAR
+    readPause.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!synth || !reading || readerPaused) return;
+
+      // Marcamos a pausa antes de chamar o navegador para evitar
+      // condições de corrida entre pause(), onend e o próximo trecho.
+      readerPaused = true;
+      clearSpeakTimer();
+
+      try {
         synth.pause();
-        savedPaused = true;
-        readerStatus.textContent = readerMessage('pause', 'Leitura pausada.') + '.';
-        updateReaderUI();
-      }
-    });
+      } catch (_) {}
 
-    readResume.addEventListener('click', () => {
-      if (!synth) return;
-      if (synth.paused) {
-        synth.resume();
-        savedPaused = false;
-        readerStatus.textContent = `${readerMessage('resume', 'Continuando')}...`;
-        updateReaderUI();
-        return;
+      if (readerStatus) {
+        readerStatus.textContent =
+          readerMessage('pause', 'Leitura pausada.') + '.';
       }
-      // Depois de trocar a voz enquanto estava pausado, cancel() encerra a
-      // utterance anterior. Continuar então fala novamente o trecho atual.
-      if (reading && savedPaused && chunks.length && chunkIndex < chunks.length) {
-        savedPaused = false;
-        readerStatus.textContent = `${readerMessage('resume', 'Continuando')}...`;
-        setTimeout(() => { if (reading) speakChunk(); }, 40);
-        updateReaderUI();
-        return;
-      }
-      // Se a fala já terminou, continua do último trecho, em vez de voltar ao início.
-      if (!reading && chunks.length && chunkIndex < chunks.length) {
-        startReader(true);
-      }
-    });
 
-    readStop.addEventListener('click', () => {
-      reading = false;
-      restarting = false;
-      languageChanging = false;
-      cancelSpeech();
-      readerStatus.textContent = readerMessage('stop', 'Leitura parada.') + '.';
       updateReaderUI();
     });
 
-    readerRate.addEventListener('input', () => {
-      setRateLabel();
-      // A velocidade passa a valer imediatamente, sem precisar esperar
-      // terminar o parágrafo atual.
-      if (reading && synth && synth.speaking && !synth.paused) restartCurrentChunk();
+    // CONTINUAR
+    readResume.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!synth || !reading || !readerPaused) return;
+
+      readerPaused = false;
+
+      // Se o navegador manteve a utterance, continua exatamente de onde parou.
+      if (synth.paused && synth.speaking) {
+        try {
+          synth.resume();
+        } catch (_) {}
+      } else {
+        // Alguns navegadores cancelam a utterance ao pausar ou perdem
+        // o estado interno. Nesse caso, repetimos somente o trecho atual.
+        cancelSpeech();
+        scheduleSpeak(60);
+      }
+
+      if (readerStatus) {
+        readerStatus.textContent =
+          `${readerMessage('resume', 'Continuando')}...`;
+      }
+
+      updateReaderUI();
     });
 
-    readerVoice.addEventListener('change', () => {
-      const voice = getSelectedVoice();
-      if (voice) localStorage.setItem('quimica-reader-voice-' + languageBase(), voice.name);
-      // Troca de voz também vale para a fala atual. Se estava pausada,
-      // mantemos a pausa e o botão Continuar retoma com a nova voz.
-      if (reading && synth) {
-        const wasPaused = synth.paused;
-        if (synth.speaking || wasPaused) {
-          savedPaused = wasPaused;
-          restarting = true;
-          cancelSpeech();
-          restarting = false;
-          if (!wasPaused) {
-            setTimeout(() => { if (reading) speakChunk(); }, 60);
-          }
-          updateReaderUI();
-        }
+    // PARAR
+    readStop.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      reading = false;
+      readerPaused = false;
+      restarting = false;
+      languageChanging = false;
+
+      cancelSpeech();
+
+      if (readerProgressBar) {
+        readerProgressBar.style.width = '0%';
+      }
+
+      if (readerStatus) {
+        readerStatus.textContent =
+          readerMessage('stop', 'Leitura parada.') + '.';
+      }
+
+      updateReaderUI();
+    });
+
+    // VELOCIDADE
+    readerRate.addEventListener('input', () => {
+      setRateLabel();
+
+      // A nova velocidade entra em vigor no trecho atual.
+      // Se estiver pausado, não reinicia a fala.
+      if (
+        reading &&
+        !readerPaused &&
+        synth &&
+        synth.speaking
+      ) {
+        restartCurrentChunk();
       }
     });
 
+    // VOZ
+    readerVoice.addEventListener('change', () => {
+      const voice = getSelectedVoice();
+
+      if (voice) {
+        localStorage.setItem(
+          'quimica-reader-voice-' + languageBase(),
+          voice.name
+        );
+      }
+
+      if (!reading || !synth) return;
+
+      const wasPaused = readerPaused || synth.paused;
+
+      // Mantém a posição atual. A nova voz será usada no mesmo trecho.
+      restarting = true;
+      cancelSpeech();
+      restarting = false;
+
+      if (wasPaused) {
+        readerPaused = true;
+
+        if (readerStatus) {
+          readerStatus.textContent =
+            readerMessage('pause', 'Leitura pausada.') + '.';
+        }
+      } else {
+        readerPaused = false;
+        scheduleSpeak(70);
+      }
+
+      updateReaderUI();
+    });
+
     setRateLabel();
+
     if (synth) {
       loadReaderVoices();
-      if ('onvoiceschanged' in synth) synth.addEventListener('voiceschanged', () => loadReaderVoices());
+
+      if ('onvoiceschanged' in synth) {
+        synth.addEventListener('voiceschanged', () => {
+          loadReaderVoices();
+          updateReaderUI();
+        });
+      }
     }
+
     updateReaderUI();
 
     // Compatibilidade com o botão antigo.
