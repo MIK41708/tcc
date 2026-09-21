@@ -591,6 +591,291 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
   <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+
+<style id="responsive-overrides">
+
+/* =========================================================
+   RESPONSIVIDADE GERAL — celulares, tablets, notebooks e telas grandes
+   ========================================================= */
+html {
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+img, svg, video, canvas, iframe {
+  max-width: 100%;
+}
+
+img, video {
+  height: auto;
+}
+
+button, input, select, textarea {
+  max-width: 100%;
+  font: inherit;
+}
+
+button, [role="button"] {
+  touch-action: manipulation;
+}
+
+table {
+  width: 100%;
+  max-width: 100%;
+}
+
+pre, code {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Evita que containers fixos estourem a viewport */
+.container, .content, .main, main, section, article, header, footer,
+.card, .cards, .grid, .modal, .modal-content, .panel {
+  max-width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .container, main, .main, .content {
+    width: min(100% - 32px, 1100px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  /* Grids passam a caber em tablets */
+  .grid, .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Elementos lado a lado podem quebrar linha */
+  .row, .actions, .button-group, .controls, .toolbar {
+    flex-wrap: wrap;
+  }
+
+  /* Evita largura fixa em painéis */
+  .modal-content, .panel, .card {
+    width: min(100%, 680px);
+  }
+
+  /* Leitor */
+  #readerPanel {
+    width: min(92vw, 560px) !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  body {
+    font-size: 15px;
+  }
+
+  .container, main, .main, .content {
+    width: calc(100% - 24px);
+  }
+
+  .grid, .cards {
+    grid-template-columns: 1fr;
+  }
+
+  /* Flexões comuns do cabeçalho e controles */
+  header, nav, .navbar, .nav, .header-content,
+  .actions, .button-group, .controls, .toolbar {
+    flex-wrap: wrap;
+  }
+
+  nav a, nav button,
+  .navbar a, .navbar button {
+    min-height: 44px;
+  }
+
+  button, input, select {
+    min-height: 44px;
+  }
+
+  textarea,
+  input[type="text"],
+  input[type="search"],
+  input[type="email"],
+  input[type="password"],
+  select {
+    width: 100%;
+  }
+
+  /* Modais ocupam quase toda a tela sem criar overflow */
+  .modal {
+    padding: 12px !important;
+  }
+
+  .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    margin: 0 auto;
+  }
+
+  /* Leitor responsivo */
+  #readerPanel {
+    position: fixed;
+    left: 12px !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    border-radius: 16px;
+    padding: 16px !important;
+  }
+
+  #readerPanel .reader-controls,
+  #readerPanel .controls,
+  #readerPanel .button-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #readerPanel button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  #readerPanel select,
+  #readerPanel input[type="range"] {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Não deixa títulos e textos longos empurrarem a página */
+  h1, h2, h3, h4, h5, h6,
+  p, li, a, span, label {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+  }
+
+  .container, main, .main, .content {
+    width: calc(100% - 16px);
+  }
+
+  h1 {
+    font-size: clamp(1.55rem, 8vw, 2.1rem);
+  }
+
+  h2 {
+    font-size: clamp(1.3rem, 6vw, 1.7rem);
+  }
+
+  h3 {
+    font-size: clamp(1.1rem, 5vw, 1.35rem);
+  }
+
+  button {
+    min-height: 44px;
+  }
+
+  /* Em telas muito pequenas, controles do leitor ficam em uma coluna */
+  #readerPanel .reader-controls,
+  #readerPanel .controls,
+  #readerPanel .button-group {
+    grid-template-columns: 1fr;
+  }
+
+  #readerPanel {
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 8px !important;
+    padding: 12px !important;
+    max-height: calc(100dvh - 16px);
+  }
+}
+
+@media (max-width: 360px) {
+  body {
+    font-size: 13px;
+  }
+
+  .container, main, .main, .content {
+    width: calc(100% - 12px);
+  }
+
+  #readerPanel {
+    left: 6px !important;
+    right: 6px !important;
+    bottom: 6px !important;
+    padding: 10px !important;
+    border-radius: 12px;
+    max-height: calc(100dvh - 12px);
+  }
+}
+
+/* Telas altas/modernas: usa a área segura do aparelho */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  #readerPanel {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Evita problemas de altura em celulares com barras dinâmicas */
+@supports (height: 100dvh) {
+  .modal-content {
+    max-height: calc(100dvh - 24px);
+  }
+}
+
+/* Preferência de movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Impressão */
+@media print {
+  body {
+    overflow: visible;
+    width: auto;
+  }
+
+  .modal,
+  #readerPanel,
+  button,
+  nav {
+    display: none !important;
+  }
+}
+
+</style>
 </head>
 <body>
 
