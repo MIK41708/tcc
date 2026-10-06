@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Laboratório Quântico - Experiência 3D Interativa</title>
+    <!-- Ícone da aba (frasco de química) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%0A%20%20%3Cpath%20d%3D%22M13%203h6v3h-1v5.5l7.6%2013.2c.9%201.6-.2%203.3-2%203.3H6.4c-1.8%200-2.9-1.7-2-3.3L12%2011.5V6h-1V3z%22%20fill%3D%22none%22%20stroke%3D%22%2300e5ff%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%0A%20%20%3Cpath%20d%3D%22M8.2%2021.5l2.8-5h10l2.8%205c.4.8.1%201.5-.7%201.5H9c-.8%200-1.2-.7-.8-1.5z%22%20fill%3D%22%2300e5ff%22%20opacity%3D%220.75%22/%3E%0A%20%20%3Ccircle%20cx%3D%2213%22%20cy%3D%2220%22%20r%3D%221.2%22%20fill%3D%22%23ffffff%22/%3E%0A%20%20%3Ccircle%20cx%3D%2218%22%20cy%3D%2218%22%20r%3D%221%22%20fill%3D%22%23ffffff%22/%3E%0A%20%20%3Ccircle%20cx%3D%2215%22%20cy%3D%2223%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22/%3E%0A%3C/svg%3E">
+
   
   <!-- Fontes Google -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -584,7 +587,184 @@
     html[data-text-size="large"] { font-size: 112.5%; }
     html[data-text-size="xlarge"] { font-size: 125%; }
     html[data-text-size="large"] body, html[data-text-size="xlarge"] body { line-height: 1.65; }
-  </style>
+  
+/* ===== HQ obrigatória antes do jogo ===== */
+.game-resource-card { gap: 18px; }
+.game-resource-actions { display: grid; gap: 10px; }
+.hq-gate-status {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 9px;
+  color: var(--text-main);
+  background: rgba(0,0,0,.12);
+  font-size: .82rem;
+  font-weight: 700;
+}
+.hq-gate-status.unlocked { color: var(--accent-cyan); }
+.hq-read-button, .game-start-link {
+  width: 100%;
+  min-height: 45px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.hq-read-button {
+  border: 1px solid var(--accent-cyan);
+  color: #031015;
+  background: var(--accent-cyan);
+}
+.game-start-link {
+  border: 1px solid var(--glass-border);
+  color: #031015;
+  background: var(--accent-cyan);
+}
+.game-start-link.is-locked {
+  opacity: .48;
+  filter: grayscale(.35);
+  cursor: not-allowed;
+}
+
+/* Modal da HQ */
+.hq-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  place-items: center;
+  padding: 12px;
+  background: rgba(0,0,0,.82);
+}
+.hq-modal-backdrop.open { display: grid; }
+.hq-modal {
+  width: min(1100px, 100%);
+  height: min(94dvh, 900px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  background: var(--section-bg);
+  box-shadow: 0 25px 90px rgba(0,0,0,.6);
+}
+.hq-modal-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.hq-modal-title { font-size: 1rem; font-weight: 700; }
+.hq-modal-subtitle { margin-top: 3px; color: #a3b8cc; font-size: .78rem; }
+.hq-close-button {
+  width: 40px; height: 40px;
+  flex: 0 0 auto;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-main);
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.3rem;
+}
+.hq-viewer {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+  background: #171717;
+}
+#hqPageImage {
+  display: block;
+  width: min(100%, 850px);
+  height: auto;
+  max-height: 100%;
+  margin: 0 auto;
+  object-fit: contain;
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(0,0,0,.45);
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+#hqPageImage.loaded { opacity: 1; }
+.hq-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: rgba(0,0,0,.25);
+  font-weight: 700;
+  pointer-events: none;
+}
+.hq-loading.hidden { display: none; }
+.hq-modal-footer {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--glass-border);
+}
+.hq-nav-button, .hq-complete-button {
+  min-height: 42px;
+  padding: 9px 13px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-main);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 700;
+}
+.hq-complete-button {
+  color: #031015;
+  border-color: var(--accent-cyan);
+  background: var(--accent-cyan);
+}
+.hq-complete-button:disabled, .hq-nav-button:disabled { opacity: .45; cursor: not-allowed; }
+.hq-page-info { text-align: center; color: var(--text-main); font-size: .84rem; font-weight: 700; }
+.hq-progress { height: 5px; margin: 0 16px 10px; border-radius: 99px; overflow: hidden; background: rgba(127,151,170,.2); }
+.hq-progress span { display: block; height: 100%; width: 0; background: var(--accent-cyan); transition: width .2s ease; }
+@media (max-width: 640px) {
+  .hq-modal-backdrop { padding: 0; }
+  .hq-modal { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  .hq-viewer { padding: 8px; }
+  .hq-modal-footer { grid-template-columns: 1fr 1fr; }
+  .hq-page-info { grid-column: 1 / -1; grid-row: 1; }
+  .hq-nav-button { grid-row: 2; }
+  .hq-complete-button { grid-row: 2; grid-column: 1 / -1; }
+}
+
+.hq-file-fallback[hidden]{display:none}.hq-file-button{display:inline-flex;align-items:center;justify-content:center;padding:11px 18px;border:1px solid currentColor;border-radius:10px;cursor:pointer;font-weight:700}.hq-file-button:hover{filter:brightness(.96)}
+
+/* Modal de login/cadastro sempre na frente do cabeçalho */
+#accountModal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+}
+
+#accountModal .modal {
+  position: relative;
+  z-index: 100000 !important;
+}
+
+#profileModal,
+#whatsappModal {
+  z-index: 99999 !important;
+}
+
+</style>
 
   <!-- Bibliotecas externas via CDN (Three.js & GSAP) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -956,7 +1136,22 @@ pre, code {
     <p class="extra-intro">Escolha uma atividade para continuar seus estudos, revisar os assuntos e praticar o que aprendeu.</p>
     <div class="resource-grid">
       <article class="resource-card" id="videos"><div><span class="tag">Aulas</span><h3>Vídeos</h3><p>Assista às resoluções do Enem e acompanhe o raciocínio passo a passo.</p></div><div><a href="https://www.youtube.com/watch?v=myuoNSypELY&t=16s" target="_blank" rel="noopener">Resolução 2023</a> <a href="https://www.youtube.com/watch?v=ogqns8ASadg&t=100s" target="_blank" rel="noopener">Resolução 2024</a> <a href="https://www.youtube.com/watch?v=rgZyEDR0RBw&list=PLrsojwmNR8-HkMCv9NsV6IAvv7Gy-8ub5" target="_blank" rel="noopener">Resolução 2025</a></div></article>
-      <article class="resource-card" id="jogo"><div><span class="tag">Prática</span><h3>Jogo educacional</h3><p>Aprenda se divertindo com desafios de química.</p></div><a href="https://joaovitorazevedo-etc.github.io/Breaking-Game/" target="_blank" rel="noopener">Começar jogo</a></article>
+      <article class="resource-card game-resource-card" id="jogo">
+  <div>
+    <span class="tag">Prática</span>
+    <h3>Jogo educacional</h3>
+    <p>Leia a HQ da missão antes de assumir o controlo do jogo. O jogo fica bloqueado até a leitura ser concluída.</p>
+    <div class="hq-gate-status" id="hqGateStatus" role="status" aria-live="polite">🔒 HQ obrigatória antes do jogo</div>
+  </div>
+  <div class="game-resource-actions">
+    <button type="button" class="hq-read-button" id="openHqButton">
+      <i class="fa-solid fa-book-open" aria-hidden="true"></i> Abrir HQ em nova página
+    </button>
+    <a href="https://joaovitorazevedo-etc.github.io/Breaking-Game/" id="gameStartLink" class="game-start-link is-locked" aria-disabled="true" tabindex="-1" target="_blank" rel="noopener">
+      <i class="fa-solid fa-lock" id="gameIcon" aria-hidden="true"></i> <span id="gameText">Jogo bloqueado</span>
+    </a>
+  </div>
+</article>
       <article class="resource-card" id="phet"><div><span class="tag">Experimentos</span><h3>PhET</h3><p>Teste experimentos práticos e observe os conceitos em ação.</p></div><a href="https://phet.colorado.edu/pt_BR/simulations/filter?subjects=chemistry&type=html" target="_blank" rel="noopener">Entrar no PhET</a></article>
       <article class="resource-card" id="bond-breaker"><div><span class="tag">Eletroquímica</span><h3>Bond Breaker 2.0</h3><p>Explore ligações químicas em uma experiência interativa.</p></div><a href="https://testtubegames.com/bondbreaker.html" target="_blank" rel="noopener">Entrar</a></article>
       <article class="resource-card" id="provao"><div><span class="tag">Desafio final</span><h3>Provão</h3><p>Teste seus conhecimentos e veja o quanto você evoluiu.</p></div><a href="prova.html" target="_blank" rel="noopener">Começar provão</a></article>
@@ -1002,6 +1197,32 @@ pre, code {
       <a href="#" id="whatsappButton" aria-label="Abrir contatos do WhatsApp" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
     </nav>
   </footer>
+
+  
+<!-- HQ obrigatória para desbloquear o jogo -->
+<div class="hq-modal-backdrop" id="hqModal" role="dialog" aria-modal="true" aria-labelledby="hqModalTitle">
+  <div class="hq-modal">
+    <div class="hq-modal-header">
+      <div>
+        <div class="hq-modal-title" id="hqModalTitle">HQ da missão</div>
+        <div class="hq-modal-subtitle">Passe por todas as páginas para desbloquear o jogo educacional.</div>
+      </div>
+      <button type="button" class="hq-close-button" id="closeHqButton" aria-label="Fechar HQ">×</button>
+    </div>
+    <div class="hq-viewer" id="hqViewer">
+      <img id="hqPageImage" class="hq-page-image" alt="Página da HQ da missão">
+      <div class="hq-loading" id="hqLoading">Carregando HQ...</div>
+    </div>
+    <div class="hq-progress" aria-hidden="true"><span id="hqProgressBar"></span></div>
+    <div class="hq-modal-footer">
+      <button type="button" class="hq-nav-button" id="hqPrevButton">← Anterior</button>
+      <div class="hq-page-info" id="hqPageInfo">Página 0 de 0</div>
+      <button type="button" class="hq-nav-button" id="hqNextButton">Próxima →</button>
+      <button type="button" class="hq-complete-button" id="hqCompleteButton" disabled>🔒 Leia todas as páginas</button>
+    </div>
+  </div>
+</div>
+
 
   <section class="reader-panel" id="readerPanel" aria-labelledby="readerTitle">
     <h2 id="readerTitle">Leitura do site</h2>
@@ -2253,8 +2474,10 @@ const firebaseConfig = {
 
   const db = getFirestore(app);
 
-  const googleProvider = new GoogleAuthProvider();
-
+    const googleProvider = new GoogleAuthProvider();
+  googleProvider.setCustomParameters({
+    prompt: 'select_account'
+  });
 
   // ==========================================
   // ELEMENTOS
@@ -3044,11 +3267,14 @@ const firebaseConfig = {
   // OBSERVA LOGIN / LOGOUT
   // ==========================================
 
-  onAuthStateChanged(
+    onAuthStateChanged(
     auth,
     async (user) => {
 
       if (user) {
+        // Salva a conta atual e notifica a interface
+        localStorage.setItem('quimica_bgs_current_user', user.email);
+        window.dispatchEvent(new Event('contaAlterada'));
 
         console.log(
           "Usuário conectado:",
@@ -3058,6 +3284,9 @@ const firebaseConfig = {
         await atualizarPerfil(user);
 
       } else {
+        // Se deslogar, vira visitante
+        localStorage.setItem('quimica_bgs_current_user', 'visitante');
+        window.dispatchEvent(new Event('contaAlterada'));
 
         console.log(
           "Nenhum usuário conectado."
@@ -3069,6 +3298,7 @@ const firebaseConfig = {
 
     }
   );
+
 
 
   // ==========================================
@@ -3176,6 +3406,114 @@ const firebaseConfig = {
 
   }
 
+</script>
+
+
+
+<script>
+(() => {
+  'use strict';
+  const GAME_URL = 'https://joaovitorazevedo-etc.github.io/Breaking-Game/';
+  const KEY_BASE = 'quimica_bgs_desbloqueado_';
+
+  const gameLink = document.getElementById('gameStartLink');
+  const gateStatus = document.getElementById('hqGateStatus');
+  const openBtn = document.getElementById('openHqButton');
+
+  // Pega a conta atual (ou 'visitante' se não estiver logado)
+  function getUsuarioAtual() {
+    return localStorage.getItem('quimica_bgs_current_user') || 'visitante';
+  }
+
+  // Detecta se a página foi RECARREGADA (F5 / botão de atualizar)
+  const navEntries = performance.getEntriesByType('navigation');
+  const isReload = navEntries.length > 0 && navEntries[0].type === 'reload';
+
+  // No reload, reseta o desbloqueio da conta atual (o processo recomeça)
+  if (isReload) {
+    localStorage.removeItem(KEY_BASE + getUsuarioAtual());
+  }
+
+  // Verifica se o jogo está desbloqueado nesta conta
+  function isUnlocked() {
+    return localStorage.getItem(KEY_BASE + getUsuarioAtual()) === 'true';
+  }
+
+  function unlockGame() {
+    if (!gameLink) return;
+    gameLink.classList.remove('is-locked');
+    gameLink.removeAttribute('aria-disabled');
+    gameLink.removeAttribute('tabindex');
+    gameLink.style.pointerEvents = 'auto';
+    gameLink.style.opacity = '1';
+    gameLink.style.cursor = 'pointer';
+    gameLink.href = GAME_URL;
+    gameLink.innerHTML = '<i class="fa-solid fa-gamepad" aria-hidden="true"></i> Começar jogo';
+
+    if (gateStatus) {
+      gateStatus.classList.add('unlocked');
+      gateStatus.innerHTML = '✅ HQ concluída. O jogo está desbloqueado nesta conta!';
+    }
+  }
+
+  function lockGame() {
+    if (!gameLink) return;
+    gameLink.classList.add('is-locked');
+    gameLink.setAttribute('aria-disabled', 'true');
+    gameLink.setAttribute('tabindex', '-1');
+    gameLink.style.pointerEvents = 'none';
+    gameLink.style.opacity = '0.6';
+    gameLink.style.cursor = 'not-allowed';
+    gameLink.removeAttribute('href');
+    gameLink.innerHTML = '<i class="fa-solid fa-lock" aria-hidden="true"></i> Jogo bloqueado';
+
+    if (gateStatus) {
+      gateStatus.classList.remove('unlocked');
+      gateStatus.innerHTML = '🔒 HQ obrigatória antes do jogo (leia até o fim e finalize na HQ)';
+    }
+  }
+
+  function checarEstado() {
+    if (isUnlocked()) {
+      unlockGame();
+    } else {
+      lockGame();
+    }
+  }
+
+  function openHq() {
+    window.open('hq.html', '_blank', 'noopener');
+  }
+
+  if (openBtn) {
+    openBtn.addEventListener('click', openHq);
+  }
+
+  if (gameLink) {
+    gameLink.addEventListener('click', (e) => {
+      if (!isUnlocked()) {
+        e.preventDefault();
+        alert('Você precisa ler a HQ até o final e clicar em "Finalizar HQ" para desbloquear o jogo nesta conta!');
+        openHq();
+      }
+    });
+  }
+
+  // Atualiza ao trocar de conta (login/logout)
+  window.addEventListener('contaAlterada', checarEstado);
+
+  // Atualiza assim que finalizar a HQ na outra aba
+  window.addEventListener('storage', (e) => {
+    if (e.key && e.key.startsWith(KEY_BASE)) {
+      checarEstado();
+    }
+  });
+
+  window.addEventListener('focus', checarEstado);
+  window.addEventListener('pageshow', checarEstado);
+
+  checarEstado();
+})();
 </script>
 
 
