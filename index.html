@@ -2440,6 +2440,16 @@ const firebaseConfig = {
   appId: "1:439847454822:web:2e214db7f94341d67545a7"
 };
 
+const googleFirestoreConfig = {
+  apiKey: "AIzaSyCTp-ByKrzLtUv6tQtr7Tla-67t12DMSog",
+  authDomain: "breakinggame-e9f98.firebaseapp.com",
+  databaseURL: "https://breakinggame-e9f98-default-rtdb.firebaseio.com",
+  projectId: "breakinggame-e9f98",
+  storageBucket: "breakinggame-e9f98.firebasestorage.app",
+  messagingSenderId: "331603651456",
+  appId: "1:331603651456:web:6335cecb75ec4850326f65"
+};
+
 
   // ==========================================
   // INICIALIZA FIREBASE
@@ -2450,6 +2460,12 @@ const firebaseConfig = {
   const auth = getAuth(app);
 
   const db = getFirestore(app);
+
+  const googleFirestoreApp = initializeApp(
+    googleFirestoreConfig,
+    "googleFirestore"
+  );
+  const googleFirestore = getFirestore(googleFirestoreApp);
 
     const googleProvider = new GoogleAuthProvider();
   googleProvider.setCustomParameters({
@@ -3011,7 +3027,7 @@ const firebaseConfig = {
         // ====================================
 
         const usuarioRef =
-          doc(db, "usuarios", user.uid);
+          doc(googleFirestore, "usuarios", user.uid);
 
         const usuarioSnap =
           await getDoc(usuarioRef);
