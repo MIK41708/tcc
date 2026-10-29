@@ -588,23 +588,12 @@
     html[data-text-size="xlarge"] { font-size: 125%; }
     html[data-text-size="large"] body, html[data-text-size="xlarge"] body { line-height: 1.65; }
   
-/* ===== HQ obrigatória antes do jogo ===== */
+/* Acesso à HQ da missão */
 .game-resource-card { gap: 18px; min-width: 0; }
 .game-resource-card > div { min-width: 0; }
 .game-resource-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; width: 100%; }
 .game-resource-actions > * { box-sizing: border-box; max-width: 100%; }
-.hq-gate-status {
-  margin-top: 14px;
-  padding: 10px 12px;
-  border: 1px solid var(--glass-border);
-  border-radius: 9px;
-  color: var(--text-main);
-  background: rgba(0,0,0,.12);
-  font-size: .82rem;
-  font-weight: 700;
-}
-.hq-gate-status.unlocked { color: var(--accent-cyan); }
-.hq-read-button, .game-start-link {
+.hq-read-button {
   width: 100%;
   min-height: 45px;
   display: inline-flex;
@@ -623,17 +612,6 @@
   color: #031015;
   background: var(--accent-cyan);
 }
-.game-start-link {
-  border: 1px solid var(--glass-border);
-  color: #031015;
-  background: var(--accent-cyan);
-}
-.game-start-link.is-locked {
-  opacity: .48;
-  filter: grayscale(.35);
-  cursor: not-allowed;
-}
-
 /* Modal da HQ */
 .hq-modal-backdrop {
   position: fixed;
@@ -1142,16 +1120,12 @@ pre, code {
   <div>
     <span class="tag">Prática</span>
     <h3>Jogo educacional</h3>
-    <p>Leia a HQ da missão antes de assumir o controlo do jogo. O jogo fica bloqueado até a leitura ser concluída.</p>
-    <div class="hq-gate-status" id="hqGateStatus" role="status" aria-live="polite">🔒 HQ obrigatória antes do jogo</div>
+    <p>Leia a HQ da missão e acesse o jogo educacional.</p>
   </div>
   <div class="game-resource-actions">
     <button type="button" class="hq-read-button" id="openHqButton">
       <i class="fa-solid fa-book-open" aria-hidden="true"></i> Abrir HQ em nova página
     </button>
-    <a href="https://joaovitorazevedo-etc.github.io/Breaking-Game/" id="gameStartLink" class="game-start-link is-locked" aria-disabled="true" tabindex="-1" target="_blank" rel="noopener">
-      <i class="fa-solid fa-lock" id="gameIcon" aria-hidden="true"></i> <span id="gameText">Jogo bloqueado</span>
-    </a>
   </div>
 </article>
       <article class="resource-card" id="phet"><div><span class="tag">Experimentos</span><h3>PhET</h3><p>Teste experimentos práticos e observe os conceitos em ação.</p></div><a href="https://phet.colorado.edu/pt_BR/simulations/filter?subjects=chemistry&type=html" target="_blank" rel="noopener">Entrar no PhET</a></article>
@@ -1202,13 +1176,13 @@ pre, code {
   </footer>
 
   
-<!-- HQ obrigatória para desbloquear o jogo -->
+<!-- HQ da missão -->
 <div class="hq-modal-backdrop" id="hqModal" role="dialog" aria-modal="true" aria-labelledby="hqModalTitle">
   <div class="hq-modal">
     <div class="hq-modal-header">
       <div>
         <div class="hq-modal-title" id="hqModalTitle">HQ da missão</div>
-        <div class="hq-modal-subtitle">Passe por todas as páginas para desbloquear o jogo educacional.</div>
+        <div class="hq-modal-subtitle">Passe por todas as páginas da missão.</div>
       </div>
       <button type="button" class="hq-close-button" id="closeHqButton" aria-label="Fechar HQ">×</button>
     </div>
@@ -3416,106 +3390,8 @@ const firebaseConfig = {
 <script>
 (() => {
   'use strict';
-  const GAME_URL = 'https://joaovitorazevedo-etc.github.io/Breaking-Game/';
-  const KEY_BASE = 'quimica_bgs_desbloqueado_';
-
-  const gameLink = document.getElementById('gameStartLink');
-  const gateStatus = document.getElementById('hqGateStatus');
   const openBtn = document.getElementById('openHqButton');
-
-  // Pega a conta atual (ou 'visitante' se não estiver logado)
-  function getUsuarioAtual() {
-    return localStorage.getItem('quimica_bgs_current_user') || 'visitante';
-  }
-
-  // Detecta se a página foi RECARREGADA (F5 / botão de atualizar)
-  const navEntries = performance.getEntriesByType('navigation');
-  const isReload = navEntries.length > 0 && navEntries[0].type === 'reload';
-
-  // No reload, reseta o desbloqueio da conta atual (o processo recomeça)
-  if (isReload) {
-    localStorage.removeItem(KEY_BASE + getUsuarioAtual());
-  }
-
-  // Verifica se o jogo está desbloqueado nesta conta
-  function isUnlocked() {
-    return localStorage.getItem(KEY_BASE + getUsuarioAtual()) === 'true';
-  }
-
-  function unlockGame() {
-    if (!gameLink) return;
-    gameLink.classList.remove('is-locked');
-    gameLink.removeAttribute('aria-disabled');
-    gameLink.removeAttribute('tabindex');
-    gameLink.style.pointerEvents = 'auto';
-    gameLink.style.opacity = '1';
-    gameLink.style.cursor = 'pointer';
-    gameLink.href = GAME_URL;
-    gameLink.innerHTML = '<i class="fa-solid fa-gamepad" aria-hidden="true"></i> Começar jogo';
-
-    if (gateStatus) {
-      gateStatus.classList.add('unlocked');
-      gateStatus.innerHTML = '✅ HQ concluída. O jogo está desbloqueado nesta conta!';
-    }
-  }
-
-  function lockGame() {
-    if (!gameLink) return;
-    gameLink.classList.add('is-locked');
-    gameLink.setAttribute('aria-disabled', 'true');
-    gameLink.setAttribute('tabindex', '-1');
-    gameLink.style.pointerEvents = 'none';
-    gameLink.style.opacity = '0.6';
-    gameLink.style.cursor = 'not-allowed';
-    gameLink.removeAttribute('href');
-    gameLink.innerHTML = '<i class="fa-solid fa-lock" aria-hidden="true"></i> Jogo bloqueado';
-
-    if (gateStatus) {
-      gateStatus.classList.remove('unlocked');
-      gateStatus.innerHTML = '🔒 HQ obrigatória antes do jogo (leia até o fim e finalize na HQ)';
-    }
-  }
-
-  function checarEstado() {
-    if (isUnlocked()) {
-      unlockGame();
-    } else {
-      lockGame();
-    }
-  }
-
-  function openHq() {
-    window.open('hq.html', '_blank', 'noopener');
-  }
-
-  if (openBtn) {
-    openBtn.addEventListener('click', openHq);
-  }
-
-  if (gameLink) {
-    gameLink.addEventListener('click', (e) => {
-      if (!isUnlocked()) {
-        e.preventDefault();
-        alert('Você precisa ler a HQ até o final e clicar em "Finalizar HQ" para desbloquear o jogo nesta conta!');
-        openHq();
-      }
-    });
-  }
-
-  // Atualiza ao trocar de conta (login/logout)
-  window.addEventListener('contaAlterada', checarEstado);
-
-  // Atualiza assim que finalizar a HQ na outra aba
-  window.addEventListener('storage', (e) => {
-    if (e.key && e.key.startsWith(KEY_BASE)) {
-      checarEstado();
-    }
-  });
-
-  window.addEventListener('focus', checarEstado);
-  window.addEventListener('pageshow', checarEstado);
-
-  checarEstado();
+  if (openBtn) openBtn.addEventListener('click', () => window.open('hq.html', '_blank', 'noopener'));
 })();
 </script>
 
