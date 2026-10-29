@@ -2466,6 +2466,11 @@ const googleFirestoreConfig = {
     "googleFirestore"
   );
   const googleFirestore = getFirestore(googleFirestoreApp);
+  const googleAuth = getAuth(googleFirestoreApp);
+
+  let activeAuth = auth;
+  let activeDb = db;
+  let activeUserCollection = "usuarios";
 
     const googleProvider = new GoogleAuthProvider();
   googleProvider.setCustomParameters({
@@ -2568,7 +2573,7 @@ const googleFirestoreConfig = {
       reader.onload = () => {
         try {
           localStorage.setItem("quimica-profile-image", reader.result);
-          const user = auth.currentUser;
+          const user = activeAuth.currentUser;
           const name = user?.displayName || user?.email?.split("@")[0] || "Q";
           renderAvatar(headerAvatar, name, reader.result);
           renderAvatar(profileAvatar, name, reader.result);
@@ -2691,7 +2696,7 @@ const googleFirestoreConfig = {
 
   accountButton.addEventListener("click", () => {
 
-    if (auth.currentUser) {
+    if (activeAuth.currentUser) {
 
       profileModal.classList.add("open");
 
@@ -2787,6 +2792,10 @@ const googleFirestoreConfig = {
           email,
           senha
         );
+
+      if (googleAuth.currentUser) {
+        await signOut(googleAuth);
+      }
 
 
       const user =
@@ -2889,6 +2898,10 @@ const googleFirestoreConfig = {
           email,
           senha
         );
+
+      if (googleAuth.currentUser) {
+        await signOut(googleAuth);
+      }
 
 
       const user =
@@ -3013,9 +3026,13 @@ const googleFirestoreConfig = {
 
         const resultado =
           await signInWithPopup(
-            auth,
+            googleAuth,
             googleProvider
           );
+
+        if (auth.currentUser) {
+          await signOut(auth);
+        }
 
 
         const user =
@@ -3087,7 +3104,11 @@ const googleFirestoreConfig = {
   // ATUALIZAR INTERFACE DO PERFIL
   // ==========================================
 
-  async function atualizarPerfil(user) {
+  async function atualizarPerfil(
+    user,
+    profileDb = activeDb,
+    userCollection = activeUserCollection
+  ) {
 
     if (!user) {
 
@@ -3108,7 +3129,7 @@ const googleFirestoreConfig = {
     try {
 
       const usuarioRef =
-        doc(db, "usuarios", user.uid);
+        doc(profileDb, userCollection, user.uid);
 
       const usuarioSnap =
         await getDoc(usuarioRef);
@@ -3174,7 +3195,7 @@ const googleFirestoreConfig = {
 
 
       const user =
-        auth.currentUser;
+        activeAuth.currentUser;
 
 
       if (!user) {
@@ -3198,7 +3219,7 @@ const googleFirestoreConfig = {
       try {
 
         await updateDoc(
-          doc(db, "usuarios", user.uid),
+          doc(activeDb, activeUserCollection, user.uid),
           {
             nome: novoNome
           }
@@ -3233,7 +3254,10 @@ const googleFirestoreConfig = {
 
       try {
 
-        await signOut(auth);
+        await Promise.all([
+          signOut(auth),
+          signOut(googleAuth)
+        ]);
 
         profileModal.classList.remove(
           "open"
@@ -3260,37 +3284,37 @@ const googleFirestoreConfig = {
   // OBSERVA LOGIN / LOGOUT
   // ==========================================
 
-    onAuthStateChanged(
-    auth,
-    async (user) => {
+  function atualizarSessao(user, sessionAuth, sessionDb, userCollection) {
+    activeAuth = sessionAuth;
+    activeDb = sessionDb;
+    activeUserCollection = userCollection;
 
-      if (user) {
-        // Salva a conta atual e notifica a interface
-        localStorage.setItem('quimica_bgs_current_user', user.email);
-        window.dispatchEvent(new Event('contaAlterada'));
-
-        console.log(
-          "Usuário conectado:",
-          user.email
-        );
-
-        await atualizarPerfil(user);
-
-      } else {
-        // Se deslogar, vira visitante
-        localStorage.setItem('quimica_bgs_current_user', 'visitante');
-        window.dispatchEvent(new Event('contaAlterada'));
-
-        console.log(
-          "Nenhum usuário conectado."
-        );
-
-        await atualizarPerfil(null);
-
-      }
-
+    if (user) {
+      localStorage.setItem('quimica_bgs_current_user', user.email);
+      window.dispatchEvent(new Event('contaAlterada'));
+      console.log("Usuário conectado:", user.email);
+      void atualizarPerfil(user, sessionDb, userCollection);
+      return;
     }
-  );
+
+    localStorage.setItem('quimica_bgs_current_user', 'visitante');
+    window.dispatchEvent(new Event('contaAlterada'));
+    console.log("Nenhum usuário conectado.");
+    void atualizarPerfil(null);
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if (googleAuth.currentUser) return;
+    atualizarSessao(user, auth, db, "usuarios");
+  });
+
+  onAuthStateChanged(googleAuth, (user) => {
+    if (user) {
+      atualizarSessao(user, googleAuth, googleFirestore, "usuario");
+    } else if (activeAuth === googleAuth) {
+      atualizarSessao(auth.currentUser, auth, db, "usuarios");
+    }
+  });
 
 
 
