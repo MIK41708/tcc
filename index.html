@@ -3027,7 +3027,7 @@ const googleFirestoreConfig = {
         // ====================================
 
         const usuarioRef =
-          doc(googleFirestore, "usuarios", user.uid);
+          doc(googleFirestore, "usuario", user.uid);
 
         const usuarioSnap =
           await getDoc(usuarioRef);
